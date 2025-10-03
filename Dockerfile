@@ -47,10 +47,10 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Create data directories with proper permissions
-RUN mkdir -p /app/data && \
-    mkdir -p /app/.next/standalone/data && \
-    chown -R nextjs:nodejs /app/data /app/.next/standalone/data && \
-    chmod -R 777 /app/data /app/.next/standalone/data
+# Note: /app/data will be mounted as volume, so permissions will be managed by Railway
+RUN mkdir -p /app/.next/standalone/data && \
+    chown -R nextjs:nodejs /app/.next/standalone/data && \
+    chmod -R 777 /app/.next/standalone/data
 
 # Copy necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

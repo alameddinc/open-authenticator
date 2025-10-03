@@ -33,14 +33,26 @@ async function initializeDefaultAdmin() {
 export function getDb(): Database.Database {
   if (!db) {
     // Ensure data directory exists
-    const { mkdirSync, existsSync } = require("fs")
+    const { mkdirSync, existsSync, accessSync, constants } = require("fs")
     const { dirname } = require("path")
 
     // Extract directory from DB_PATH and create it
     const dbDir = dirname(DB_PATH)
+    console.log(`🔍 Checking directory: ${dbDir}`)
+    console.log(`🔍 Directory exists: ${existsSync(dbDir)}`)
+
     if (!existsSync(dbDir)) {
+      console.log(`📁 Creating database directory: ${dbDir}`)
       mkdirSync(dbDir, { recursive: true })
-      console.log(`📁 Created database directory: ${dbDir}`)
+      console.log(`✅ Directory created successfully`)
+    }
+
+    // Check write permissions
+    try {
+      accessSync(dbDir, constants.W_OK | constants.R_OK)
+      console.log(`✅ Directory has read/write permissions`)
+    } catch (err) {
+      console.error(`❌ No read/write permissions on ${dbDir}:`, err)
     }
 
     // Initialize database
