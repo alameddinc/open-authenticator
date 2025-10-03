@@ -6,6 +6,8 @@ import bcrypt from "bcrypt"
 
 // DB_PATH from env or default to data/app.db in current directory
 const DB_PATH = process.env.DB_PATH || join(process.cwd(), "data", "app.db")
+console.log("🔍 DB_PATH:", DB_PATH)
+console.log("🔍 process.cwd():", process.cwd())
 
 let db: Database.Database | null = null
 

@@ -56,8 +56,8 @@ RUN mkdir -p /app/data && \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Make scripts executable
-RUN chmod +x /app/scripts/*.sh
+# Make scripts executable (must be before USER nextjs)
+RUN chmod +x /app/scripts/*.sh 2>/dev/null || chmod +x /app/.next/standalone/scripts/*.sh
 
 USER nextjs
 
