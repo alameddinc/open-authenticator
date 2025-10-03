@@ -43,23 +43,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Install cron, sqlite, and wget for Railway deployment
 RUN apk add --no-cache wget dcron sqlite
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 # Create data directories with proper permissions
-# Note: /app/data will be mounted as volume, so permissions will be managed by Railway
 RUN mkdir -p /app/.next/standalone/data && \
-    chown -R nextjs:nodejs /app/.next/standalone/data && \
     chmod -R 777 /app/.next/standalone/data
 
 # Copy necessary files from builder
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Make scripts executable (must be before USER nextjs)
+# Make scripts executable
 RUN chmod +x /app/scripts/*.sh 2>/dev/null || chmod +x /app/.next/standalone/scripts/*.sh
 
-USER nextjs
+# Note: Running as root for Railway volume permissions
+# In production with proper infrastructure, use USER nextjs
 
 EXPOSE 3000
 
