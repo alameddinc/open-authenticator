@@ -23,6 +23,16 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
+# Copy static files to standalone directory
+RUN cp -r .next/static .next/standalone/.next/static && \
+    mkdir -p .next/standalone/public && \
+    cp -r public/. .next/standalone/public/ && \
+    ls -la .next/standalone/public/ && \
+    mkdir -p .next/standalone/scripts && \
+    cp scripts/*.sh .next/standalone/scripts/ && \
+    mkdir -p .next/standalone/lib/db && \
+    cp lib/db/schema.sql .next/standalone/lib/db/schema.sql
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
@@ -30,16 +40,24 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache wget
+# Install cron, sqlite, and wget for Railway deployment
+RUN apk add --no-cache wget dcron sqlite
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Create data directory
-RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
+# Create data directories with proper permissions
+RUN mkdir -p /app/data && \
+    mkdir -p /app/.next/standalone/data && \
+    chown -R nextjs:nodejs /app/data /app/.next/standalone/data && \
+    chmod -R 777 /app/data /app/.next/standalone/data
 
 # Copy necessary files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Make scripts executable
+RUN chmod +x /app/scripts/*.sh
 
 USER nextjs
 
@@ -47,5 +65,7 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV AUDIT_RETENTION_DAYS=30
 
-CMD ["node", "server.js"]
+# Use entrypoint script to set up cron and start app
+CMD ["/app/scripts/entrypoint.sh"]
